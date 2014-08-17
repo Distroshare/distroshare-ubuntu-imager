@@ -1,0 +1,284 @@
+#!/bin/bash
+
+#Distroshare Ubuntu Imager - https://www.distroshare.com
+#
+#Makes a Live cd that is installable from your current installation
+#This is intended to work on Ubuntu and its derivatives
+#
+#Based on this tutorial: 
+#https://help.ubuntu.com/community/MakeALiveCD/DVD/BootableFlashFromHarddiskInstall
+
+#GPL2 License
+
+VERSION="1.0"
+
+echo "
+################################################
+######                                    ######
+######                                    ######
+###### Distroshare Ubuntu Imager $VERSION      ######
+######                                    ######
+######                                    ######
+###### Brought to you by distroshare.com  ######
+######                                    ######
+######                                    ######
+################################################
+
+
+"
+
+#Configuration file name and path
+CONFIG_FILE="./distroshare-ubuntu-imager.config"
+
+#Current directory
+CURRENT_DIR=`pwd`
+
+#Convience function to unmount filesystems
+unmount_filesystems() {
+    echo "Unmounting filesystems"
+    umount "${WORK}"/rootfs/proc
+    umount "${WORK}"/rootfs/sys
+    umount -l "${WORK}"/rootfs/dev/pts
+    umount -l "${WORK}"/rootfs/dev
+}
+
+#Starting the process
+
+#We depend on the umask being 022
+umask 022
+
+#Source the config file
+if [ -r "$CONFIG_FILE" ]; then
+    . "$CONFIG_FILE"
+else
+    echo "Can't read config file.  Exiting"
+    exit 1
+fi
+
+#Set some other variables based on the config file
+CD="${WORK}"/CD
+CASPER="${CD}"/casper
+
+#Checking for root
+if [ "$USER" != "root" ]; then
+    echo "You aren't root, so I'm exiting.  Become root and try again."
+    exit 1
+fi
+
+#Make the directories
+echo "Making the necessary directories"
+mkdir -p "${CD}"/{casper,boot/grub}
+mkdir -p "${WORK}"/rootfs
+
+#Install essential tools
+echo "Installing the essential tools"
+apt-get -q=2 update
+apt-get -q=2 install grub2 xorriso squashfs-tools
+
+#Copy the filesystem
+echo "Copying the current system to the new directories"
+rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
+--exclude=/sys/* --exclude=/tmp/* --exclude=/run/* \
+--exclude=/home/* --exclude=/lost+found \
+--exclude=/var/tmp/* --exclude=/boot --exclude=/root/* \
+--exclude=/var/mail/* --exclude=/var/spool/* --exclude=/media/* \
+--exclude=/etc/fstab --exclude=/etc/mtab --exclude=/etc/hosts \
+--exclude=/etc/timezone --exclude=/etc/shadow* --exclude=/etc/gshadow* \
+--exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf \
+--exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs / "${WORK}"/rootfs
+
+#Copy boot partition
+echo "Copying the boot dir/partition"
+rsync -a --one-file-system /boot/ "${WORK}"/rootfs/boot
+
+#Create some links and dirs in /dev
+echo "Creating some links and dirs in /dev"
+mkdir "${WORK}"/rootfs/dev/mapper
+mkdir "${WORK}"/rootfs/dev/pts
+ln -s /proc/kcore "${WORK}"/rootfs/dev/core
+ln -s /proc/self/fd "${WORK}"/rootfs/dev/fd
+ln -s /run/shm "${WORK}"/rootfs/dev/shm
+cd "${WORK}"/rootfs/dev
+ln -s fd/2 stderr
+ln -s fd/0 stdin
+ln -s fd/1 stdout
+ln -s ram ram1
+cd "${CURRENT_DIR}"
+
+#Copy the resolv.conf file - needed for newer Ubuntus
+echo "Copying resolv.conf"
+mv "${WORK}"/rootfs/etc/resolv.conf "${WORK}"/rootfs/etc/resolv.conf.old
+cp /etc/resolv.conf "${WORK}"/rootfs/etc/resolv.conf
+
+#Unmount the filesystems in case the script failed before
+unmount_filesystems
+
+#Mount dirs into copied distro
+echo "Mounting system file dirs"
+mount --bind /dev/ "${WORK}"/rootfs/dev
+mount --bind /dev/pts "${WORK}"/rootfs/dev/pts
+mount -t proc proc "${WORK}"/rootfs/proc
+mount -t sysfs sysfs "${WORK}"/rootfs/sys
+
+#Remove non-system users
+echo "Removing non-system users"
+for i in `cat "${WORK}"/rootfs/etc/passwd | awk -F":" '{print $1}'`
+do
+   uid=`cat "${WORK}"/rootfs/etc/passwd | grep "^${i}:" | awk -F":" '{print $3}'`
+   [ "$uid" -gt "998" -a  "$uid" -ne "65534"  ] && \
+       chroot "${WORK}"/rootfs /bin/bash -c "userdel --force ${i} 2> /dev/null"
+done
+
+. /etc/lsb-release
+#Set flavour in /etc/casper.conf
+echo "export FLAVOUR=\"${DISTRIB_ID}\"" >> "${WORK}"/rootfs/etc/casper.conf
+
+#Run commands in chroot
+echo "Creating script to run in chrooted env"
+cat > "${WORK}"/rootfs/distroshare_imager.sh <<EOF
+#!/bin/bash
+
+umask 022
+
+#Modify copied distro
+echo "Installing Ubiquity"
+apt-get -q=2 install casper lupin-casper
+apt-get -q=2 install ubiquity
+
+if [ "$GTK" == "YES" ]; then
+   apt-get -q=2 install ubiquity-frontend-gtk
+else
+   apt-get -q=2 install ubiquity-frontend-qt
+fi
+
+#Update initramfs 
+echo "Updating initramfs"
+depmod -a $(uname -r)
+update-initramfs -u -k all > /dev/null 2>&1
+
+echo "Creating filesystem.manifest"
+dpkg-query -W --showformat='${Package} ${Version}\n' > /filesystem.manifest
+
+#Clean up downloaded packages
+echo "Cleaning up"
+apt-get clean
+
+#Clean up files
+rm -f /etc/X11/xorg.conf*
+rm -f /etc/{hosts,hostname,mtab*,fstab}
+rm -f /etc/udev/rules.d/70-persistent*
+rm -f /etc/cups/ssl/{server.crt,server.key}
+rm -f /etc/ssh/*key*
+rm -f /var/lib/dbus/machine-id
+rm -f /etc/distroshare_imager.conf
+rm -f /etc/{resolv.conf,resolv.conf.old}
+
+#Clean up files - taken from BlackLab Imager
+find /var/lock/ /var/backups/ \
+/var/tmp/ /var/crash/ \
+/var/lib/ubiquity/ -type f -exec rm -f {} \;
+
+#Remove archived logs
+find /var/log -type f -name '*.gz' -exec rm -f {} \;
+
+#Truncate all logs
+find /var/log -type f -exec truncate -s 0 {} \;
+EOF
+
+echo "Running script in chrooted env"
+chmod 700 "${WORK}"/rootfs/distroshare_imager.sh
+chown root:root "${WORK}"/rootfs/distroshare_imager.sh
+chroot "${WORK}"/rootfs /distroshare_imager.sh
+rm -f "${WORK}"/rootfs/distroshare_imager.sh
+
+if [ $INTERACTIVE_SHELL == "YES" ]; then
+    echo "Dropping to a chrooted shell so you can make custom mods"
+    echo "Type: exit to resume the script"
+    chroot "${WORK}"/rootfs /bin/bash
+fi
+
+echo "Copying over kernel and initrd"
+export kversion=`cd "${WORK}"/rootfs/boot && ls -1 vmlinuz-* | tail -1 | sed 's@vmlinuz-@@'`
+cp -p "${WORK}"/rootfs/boot/vmlinuz-${kversion} "${CASPER}"/vmlinuz
+cp -p "${WORK}"/rootfs/boot/initrd.img-${kversion} "${CASPER}"/initrd.img
+cp -p "${WORK}"/rootfs/boot/memtest86+.bin "${CD}"/boot
+
+echo "Copying filesystem.manifest"
+cp "${WORK}"/rootfs/filesystem.manifest "${CASPER}"/
+
+cp "${CASPER}"/filesystem.manifest{,-desktop}
+REMOVE='ubiquity casper user-setup os-prober libdebian-installer4'
+for i in $REMOVE
+do
+   sed -i "/${i}/d" "${CASPER}"/filesystem.manifest-desktop
+done
+
+echo "Removing temp files"
+rm -rf "${WORK}"/rootfs/tmp/*
+rm -rf "${WORK}"/rootfs/run/*
+
+unmount_filesystems
+echo "Making squashfs - this is going to take a while"
+mksquashfs "${WORK}"/rootfs "${CASPER}"/filesystem.squashfs -noappend
+
+echo "Making filesystem.size"
+echo -n $(du -s --block-size=1 "${WORK}"/rootfs | \
+    tail -1 | awk '{print $1}') > "${CASPER}"/filesystem.size
+echo "Making md5sum"
+rm -f "${CD}"/md5sum.txt
+find "${CD}" -type f -print0 | xargs -0 md5sum | sed "s@${CD}@.@" | \
+    grep -v md5sum.txt >> "${CD}"/md5sum.txt
+
+echo "Creating grub.cfg"
+echo "
+set default=\"0\"
+set timeout=10
+
+menuentry \"Ubuntu GUI\" {
+linux /casper/vmlinuz boot=casper $BOOT_APPEND quiet splash --
+initrd /casper/initrd.img
+}
+
+menuentry \"Ubuntu in safe mode\" {
+linux /casper/vmlinuz boot=casper $BOOT_APPEND xforcevesa quiet splash --
+initrd /casper/initrd.img
+}
+
+menuentry \"Ubuntu CLI\" {
+linux /casper/vmlinuz boot=casper $BOOT_APPEND textonly quiet splash --
+initrd /casper/initrd.img
+}
+
+menuentry \"Ubuntu GUI persistent mode\" {
+linux /casper/vmlinuz boot=casper $BOOT_APPEND persistent quiet splash --
+initrd /casper/initrd.img
+}
+
+menuentry \"Ubuntu GUI from RAM\" {
+linux /casper/vmlinuz boot=casper $BOOT_APPEND toram quiet splash --
+initrd /casper/initrd.img
+}
+
+menuentry \"Check Disk for Defects\" {
+linux /casper/vmlinuz boot=casper $BOOT_APPEND integrity-check quiet splash --
+initrd /casper/initrd.img
+}
+
+menuentry \"Memory Test\" {
+linux16 /boot/memtest86+.bin --
+}
+
+menuentry \"Boot from the first hard disk\" {
+set root=(hd0)
+chainloader +1
+}
+" > "${CD}"/boot/grub/grub.cfg
+
+echo "Creating the iso"
+grub-mkrescue -o "${WORK}"/live-cd.iso "${CD}"
+
+echo "We are done."
+echo "Is your distro interesting or customized for a specific machine?"
+echo "How about sharing it at https://www.distroshare.com?"
+echo "You will help others and you could receive donations for your work."
+echo ""
