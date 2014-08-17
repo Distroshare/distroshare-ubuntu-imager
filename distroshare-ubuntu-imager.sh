@@ -160,26 +160,41 @@ echo "Creating filesystem.manifest"
 dpkg-query -W --showformat='${Package} ${Version}\n' > /filesystem.manifest
 
 #Clean up downloaded packages
-echo "Cleaning up"
+echo "Cleaning up files not needed in image"
 apt-get clean
 
-#Clean up files
-rm -f /etc/X11/xorg.conf*
+#Clean up files -some taken from BlackLab Imager
 rm -f /etc/{hosts,hostname,mtab*,fstab}
 rm -f /etc/udev/rules.d/70-persistent*
 rm -f /etc/cups/ssl/{server.crt,server.key}
 rm -f /etc/ssh/*key*
 rm -f /var/lib/dbus/machine-id
-rm -f /etc/distroshare_imager.conf
 rm -f /etc/{resolv.conf,resolv.conf.old}
+rm -f /etc/wicd/{wired-settings.conf,wireless-settings.conf}
+rm -rf /etc/NetworkManager/system-connections/*
+truncate -s 0 /etc/printcap
+truncate -s 0 /etc/cups/printers.conf
+rm -rf /var/lib/sudo/*
+rm -rf /var/lib/AccountsService/users/*
+rm -rf /var/lib/kdm/*
+rm -rf /var/lib/lightdm/*
+rm -rf /var/lib/lightdm-data/*
+rm -rf /var/lib/gdm/*
+rm -rf /var/lib/gdm-data/*
+rm -rf /var/lib/mdm/*
+rm -rf /var/lib/mdm-data/*
+rm -rf /var/run/console/*
 
-#Clean up files - taken from BlackLab Imager
-find /var/lock/ /var/backups/ \
-/var/tmp/ /var/crash/ \
+if [ ! -L /var/run ]; then
+   find /var/run/ -type f -exec rm -f {} \;
+fi
+
+find /var/lock/ /var/backups/ /var/mail/ /var/spool/ \
+/var/tmp/ /var/crash/ /var/cache/ \
 /var/lib/ubiquity/ -type f -exec rm -f {} \;
 
 #Remove archived logs
-find /var/log -type f -name '*.gz' -exec rm -f {} \;
+find /var/log -type f -name '*.[0-9]*' -exec rm -f {} \;
 
 #Truncate all logs
 find /var/log -type f -exec truncate -s 0 {} \;
@@ -235,32 +250,32 @@ set default=\"0\"
 set timeout=10
 
 menuentry \"Ubuntu GUI\" {
-linux /casper/vmlinuz boot=casper $BOOT_APPEND quiet splash --
+linux /casper/vmlinuz boot=casper $KERNEL_PARAMS quiet splash --
 initrd /casper/initrd.img
 }
 
 menuentry \"Ubuntu in safe mode\" {
-linux /casper/vmlinuz boot=casper $BOOT_APPEND xforcevesa quiet splash --
+linux /casper/vmlinuz boot=casper $KERNEL_PARAMS xforcevesa quiet splash --
 initrd /casper/initrd.img
 }
 
 menuentry \"Ubuntu CLI\" {
-linux /casper/vmlinuz boot=casper $BOOT_APPEND textonly quiet splash --
+linux /casper/vmlinuz boot=casper $KERNEL_PARAMS textonly quiet splash --
 initrd /casper/initrd.img
 }
 
 menuentry \"Ubuntu GUI persistent mode\" {
-linux /casper/vmlinuz boot=casper $BOOT_APPEND persistent quiet splash --
+linux /casper/vmlinuz boot=casper $KERNEL_PARAMS persistent quiet splash --
 initrd /casper/initrd.img
 }
 
 menuentry \"Ubuntu GUI from RAM\" {
-linux /casper/vmlinuz boot=casper $BOOT_APPEND toram quiet splash --
+linux /casper/vmlinuz boot=casper $KERNEL_PARAMS toram quiet splash --
 initrd /casper/initrd.img
 }
 
 menuentry \"Check Disk for Defects\" {
-linux /casper/vmlinuz boot=casper $BOOT_APPEND integrity-check quiet splash --
+linux /casper/vmlinuz boot=casper $KERNEL_PARAMS integrity-check quiet splash --
 initrd /casper/initrd.img
 }
 
@@ -273,6 +288,12 @@ set root=(hd0)
 chainloader +1
 }
 " > "${CD}"/boot/grub/grub.cfg
+
+if [ -n "$UBIQUITY_KERNEL_PARAMS" ]; then
+    echo "Replacing ubiquity default extra kernel params with: $UBIQUITY_KERNEL_PARAMS"
+    sed -i "s/defopt_params=\"\"/defopt_params=\"${UBIQUITY_KERNEL_PARAMS}\"/" \
+"${WORK}"/rootfs/usr/share/grub-installer/grub-installer
+fi
 
 echo "Creating the iso"
 grub-mkrescue -o "${WORK}"/live-cd.iso "${CD}"
