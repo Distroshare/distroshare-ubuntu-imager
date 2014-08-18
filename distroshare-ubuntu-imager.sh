@@ -36,10 +36,10 @@ CURRENT_DIR=`pwd`
 #Convience function to unmount filesystems
 unmount_filesystems() {
     echo "Unmounting filesystems"
-    umount "${WORK}"/rootfs/proc
-    umount "${WORK}"/rootfs/sys
-    umount -l "${WORK}"/rootfs/dev/pts
-    umount -l "${WORK}"/rootfs/dev
+    umount "${WORK}"/rootfs/proc > /dev/null 2>&1
+    umount "${WORK}"/rootfs/sys > /dev/null 2>&1
+    umount -l "${WORK}"/rootfs/dev/pts > /dev/null 2>&1
+    umount -l "${WORK}"/rootfs/dev > /dev/null 2>&1
 }
 
 #Starting the process
@@ -129,10 +129,6 @@ do
        chroot "${WORK}"/rootfs /bin/bash -c "userdel --force ${i} 2> /dev/null"
 done
 
-. /etc/lsb-release
-#Set flavour in /etc/casper.conf
-echo "export FLAVOUR=\"${DISTRIB_ID}\"" >> "${WORK}"/rootfs/etc/casper.conf
-
 #Run commands in chroot
 echo "Creating script to run in chrooted env"
 cat > "${WORK}"/rootfs/distroshare_imager.sh <<EOF
@@ -151,6 +147,12 @@ else
    apt-get -q=2 install ubiquity-frontend-qt
 fi
 
+if [ -n "$UBIQUITY_KERNEL_PARAMS" ]; then
+  echo "Replacing ubiquity default extra kernel params with: $UBIQUITY_KERNEL_PARAMS"
+  sed -i "s/defopt_params=\"\"/defopt_params=\"${UBIQUITY_KERNEL_PARAMS}\"/" \
+/usr/share/grub-installer/grub-installer
+fi
+
 #Update initramfs 
 echo "Updating initramfs"
 depmod -a $(uname -r)
@@ -160,18 +162,17 @@ echo "Creating filesystem.manifest"
 dpkg-query -W --showformat='${Package} ${Version}\n' > /filesystem.manifest
 
 #Clean up downloaded packages
-echo "Cleaning up files not needed in image"
+echo "Cleaning up files that are not needed in the new image"
 apt-get clean
 
-#Clean up files -some taken from BlackLab Imager
+#Clean up files
+#rm -f /etc/X11/xorg.conf*
 rm -f /etc/{hosts,hostname,mtab*,fstab}
 rm -f /etc/udev/rules.d/70-persistent*
 rm -f /etc/cups/ssl/{server.crt,server.key}
 rm -f /etc/ssh/*key*
 rm -f /var/lib/dbus/machine-id
 rm -f /etc/{resolv.conf,resolv.conf.old}
-rm -f /etc/wicd/{wired-settings.conf,wireless-settings.conf}
-rm -rf /etc/NetworkManager/system-connections/*
 truncate -s 0 /etc/printcap
 truncate -s 0 /etc/cups/printers.conf
 rm -rf /var/lib/sudo/*
@@ -185,12 +186,19 @@ rm -rf /var/lib/mdm/*
 rm -rf /var/lib/mdm-data/*
 rm -rf /var/run/console/*
 
+#If /var/run is a link, then it is pointing to /run
 if [ ! -L /var/run ]; then
-   find /var/run/ -type f -exec rm -f {} \;
+  find /var/run/ -type f -exec rm -f {} \;
 fi
 
-find /var/lock/ /var/backups/ /var/mail/ /var/spool/ \
-/var/tmp/ /var/crash/ /var/cache/ \
+#If /var/lock is a link, then it is pointing to /run/lock
+if [ ! -L /var/lock ]; then
+  find /var/lock/ -type f -exec rm -f {} \;
+fi
+
+#Clean up files - taken from BlackLab Imager
+find /var/backups/ /var/spool/ /var/mail/ \
+/var/tmp/ /var/crash/ \
 /var/lib/ubiquity/ -type f -exec rm -f {} \;
 
 #Remove archived logs
@@ -205,6 +213,10 @@ chmod 700 "${WORK}"/rootfs/distroshare_imager.sh
 chown root:root "${WORK}"/rootfs/distroshare_imager.sh
 chroot "${WORK}"/rootfs /distroshare_imager.sh
 rm -f "${WORK}"/rootfs/distroshare_imager.sh
+
+. /etc/lsb-release
+#Set flavour in /etc/casper.conf
+echo "export FLAVOUR=\"${DISTRIB_ID}\"" >> "${WORK}"/rootfs/etc/casper.conf
 
 if [ $INTERACTIVE_SHELL == "YES" ]; then
     echo "Dropping to a chrooted shell so you can make custom mods"
@@ -288,12 +300,6 @@ set root=(hd0)
 chainloader +1
 }
 " > "${CD}"/boot/grub/grub.cfg
-
-if [ -n "$UBIQUITY_KERNEL_PARAMS" ]; then
-    echo "Replacing ubiquity default extra kernel params with: $UBIQUITY_KERNEL_PARAMS"
-    sed -i "s/defopt_params=\"\"/defopt_params=\"${UBIQUITY_KERNEL_PARAMS}\"/" \
-"${WORK}"/rootfs/usr/share/grub-installer/grub-installer
-fi
 
 echo "Creating the iso"
 grub-mkrescue -o "${WORK}"/live-cd.iso "${CD}"
