@@ -16,6 +16,11 @@ Ubuntu or derivative distribution.
 It is a bash script, similar to Remastersys and its forks.  The script is 
 based on this tutorial: https://help.ubuntu.com/community/MakeALiveCD/DVD/BootableFlashFromHarddiskInstall. 
 
+To run the script, run it from the directory where it is located.  For example:
+y
+cd ~/distroshare-ubuntu-imager-1.0
+./distroshare-ubuntu-imager.sh
+
 To boot the ISO from a USB stick, you can use the dd command like this:
 
 dd if=isoimage.iso of=/dev/sdb bs=1M
