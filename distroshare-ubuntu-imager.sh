@@ -82,7 +82,7 @@ rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
 --exclude=/home/* --exclude=/lost+found \
 --exclude=/var/tmp/* --exclude=/boot --exclude=/root/* \
 --exclude=/var/mail/* --exclude=/var/spool/* --exclude=/media/* \
---exclude=/etc/fstab --exclude=/etc/mtab --exclude=/etc/hosts \
+--exclude=/etc/hosts \
 --exclude=/etc/timezone --exclude=/etc/shadow* --exclude=/etc/gshadow* \
 --exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf \
 --exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs / "${WORK}"/rootfs
@@ -139,8 +139,7 @@ umask 022
 #Modify copied distro
 echo "Installing Ubiquity"
 apt-get -q=2 install casper lupin-casper
-apt-get -q=2 install ubiquity
-
+echo "GTK is: $GTK"
 if [ "$GTK" == "YES" ]; then
    apt-get -q=2 install ubiquity-frontend-gtk
 else
