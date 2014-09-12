@@ -169,6 +169,7 @@ apt-get clean
 rm -f /etc/{hosts,hostname,mtab*,fstab}
 rm -f /etc/udev/rules.d/70-persistent*
 rm -f /etc/cups/ssl/{server.crt,server.key}
+rm -f /etc/NetworkManager/system-connections/*
 rm -f /etc/ssh/*key*
 rm -f /var/lib/dbus/machine-id
 rm -f /etc/{resolv.conf,resolv.conf.old}
