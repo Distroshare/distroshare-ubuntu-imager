@@ -172,7 +172,8 @@ rm -f /etc/cups/ssl/{server.crt,server.key}
 rm -f /etc/NetworkManager/system-connections/*
 rm -f /etc/ssh/*key*
 rm -f /var/lib/dbus/machine-id
-rm -f /etc/{resolv.conf,resolv.conf.old}
+rm -f /etc/resolv.conf
+mv /etc/resolv.conf.old /etc/resolv.conf
 truncate -s 0 /etc/printcap
 truncate -s 0 /etc/cups/printers.conf
 rm -rf /var/lib/sudo/*
