@@ -174,7 +174,7 @@ rm -f /etc/ssh/*key*
 rm -f /var/lib/dbus/machine-id
 rm -f /etc/resolv.conf
 mv /etc/resolv.conf.old /etc/resolv.conf
-truncate -s 0 /etc/printcap
+truncate -s 0 /etc/printcap > /dev/null 2>&1
 truncate -s 0 /etc/cups/printers.conf
 rm -rf /var/lib/sudo/*
 rm -rf /var/lib/AccountsService/users/*
