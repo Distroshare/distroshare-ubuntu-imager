@@ -16,7 +16,7 @@ echo "
 ################################################
 ######                                    ######
 ######                                    ######
-###### Distroshare Ubuntu Imager $VERSION      ######
+###### Distroshare Ubuntu Imager $VERSION    ######
 ######                                    ######
 ######                                    ######
 ###### Brought to you by distroshare.com  ######
