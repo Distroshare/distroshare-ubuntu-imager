@@ -10,7 +10,7 @@
 
 #GPL2 License
 
-VERSION="1.0.2"
+VERSION="1.0.3"
 
 echo "
 ################################################
@@ -75,6 +75,15 @@ echo "Installing the essential tools"
 apt-get -q=2 update
 apt-get -q=2 install grub2 xorriso squashfs-tools
 
+echo "Installing Ubiquity"
+apt-get -q=2 install casper lupin-casper
+echo "GTK is: $GTK"
+if [ "$GTK" == "YES" ]; then
+   apt-get -q=2 install ubiquity-frontend-gtk
+else
+   apt-get -q=2 install ubiquity-frontend-qt
+fi
+
 #Copy the filesystem
 echo "Copying the current system to the new directories"
 rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
@@ -137,15 +146,6 @@ cat > "${WORK}"/rootfs/distroshare_imager.sh <<EOF
 umask 022
 
 #Modify copied distro
-echo "Installing Ubiquity"
-apt-get -q=2 install casper lupin-casper
-echo "GTK is: $GTK"
-if [ "$GTK" == "YES" ]; then
-   apt-get -q=2 install ubiquity-frontend-gtk
-else
-   apt-get -q=2 install ubiquity-frontend-qt
-fi
-
 if [ -n "$UBIQUITY_KERNEL_PARAMS" ]; then
   echo "Replacing ubiquity default extra kernel params with: $UBIQUITY_KERNEL_PARAMS"
   sed -i "s/defopt_params=\"\"/defopt_params=\"${UBIQUITY_KERNEL_PARAMS}\"/" \
@@ -156,9 +156,6 @@ fi
 echo "Updating initramfs"
 depmod -a $(uname -r)
 update-initramfs -u -k all > /dev/null 2>&1
-
-echo "Creating filesystem.manifest"
-dpkg-query -W --showformat='${Package} ${Version}\n' > /filesystem.manifest
 
 #Clean up downloaded packages
 echo "Cleaning up files that are not needed in the new image"
@@ -231,15 +228,18 @@ cp -p "${WORK}"/rootfs/boot/vmlinuz-${kversion} "${CASPER}"/vmlinuz
 cp -p "${WORK}"/rootfs/boot/initrd.img-${kversion} "${CASPER}"/initrd.img
 cp -p "${WORK}"/rootfs/boot/memtest86+.bin "${CD}"/boot
 
-echo "Copying filesystem.manifest"
-cp "${WORK}"/rootfs/filesystem.manifest "${CASPER}"/
+echo "Creating filesystem.manifest"
+dpkg-query -W --showformat='${Package} ${Version}\n' > "${CASPER}"/filesystem.manifest
 
 cp "${CASPER}"/filesystem.manifest{,-desktop}
-REMOVE='ubiquity casper user-setup os-prober libdebian-installer4'
+REMOVE='ubiquity ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4'
 for i in $REMOVE
 do
    sed -i "/${i}/d" "${CASPER}"/filesystem.manifest-desktop
 done
+
+echo "Uninstalling Ubiquity"
+apt-get -q=2 remove casper lupin-casper ubiquity
 
 echo "Removing temp files"
 rm -rf "${WORK}"/rootfs/tmp/*
