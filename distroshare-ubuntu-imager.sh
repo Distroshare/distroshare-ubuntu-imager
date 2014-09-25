@@ -106,12 +106,12 @@ mkdir "${WORK}"/rootfs/dev/mapper
 mkdir "${WORK}"/rootfs/dev/pts
 ln -s /proc/kcore "${WORK}"/rootfs/dev/core
 ln -s /proc/self/fd "${WORK}"/rootfs/dev/fd
-ln -s /run/shm "${WORK}"/rootfs/dev/shm
 cd "${WORK}"/rootfs/dev
 ln -s fd/2 stderr
 ln -s fd/0 stdin
 ln -s fd/1 stdout
 ln -s ram ram1
+rsync -a /dev/urandom urandom
 cd "${CURRENT_DIR}"
 
 #Copy the resolv.conf file - needed for newer Ubuntus
