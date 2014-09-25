@@ -101,11 +101,6 @@ rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
 --exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf \
 --exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs / "${WORK}"/rootfs
 
-if [ -n "$EXTRA_PKGS" ]; then
-   echo "Removing extra packages from installed system"
-   apt-get -q=2 remove "$EXTRA_PKGS"
-fi
-
 #Copy boot partition
 echo "Copying the boot dir/partition"
 rsync -a --one-file-system /boot/ "${WORK}"/rootfs/boot
@@ -244,6 +239,11 @@ done
 
 echo "Uninstalling Ubiquity"
 apt-get -q=2 remove casper lupin-casper ubiquity
+
+if [ -n "$EXTRA_PKGS" ]; then
+   echo "Removing extra packages from installed system"
+   apt-get -q=2 remove "$EXTRA_PKGS"
+fi
 
 echo "Removing temp files"
 rm -rf "${WORK}"/rootfs/tmp/*
