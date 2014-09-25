@@ -257,6 +257,10 @@ rm -f "${CD}"/md5sum.txt
 find "${CD}" -type f -print0 | xargs -0 md5sum | sed "s@${CD}@.@" | \
     grep -v md5sum.txt >> "${CD}"/md5sum.txt
 
+echo "Creating release notes url"
+mkdir "${CD}"/.disk
+echo "${RELEASE_NOTES_URL}" > "${CD}"/.disk/release_notes_url
+
 echo "Creating grub.cfg"
 echo "
 set default=\"0\"
