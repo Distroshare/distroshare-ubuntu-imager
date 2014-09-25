@@ -84,6 +84,11 @@ else
    apt-get -q=2 install ubiquity-frontend-qt
 fi
 
+if [ -n "$EXTRA_PKGS" ]; then
+   echo "Adding extra packages to installed system"
+   apt-get -q=2 install "$EXTRA_PKGS"
+fi
+
 #Copy the filesystem
 echo "Copying the current system to the new directories"
 rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
@@ -95,6 +100,11 @@ rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
 --exclude=/etc/timezone --exclude=/etc/shadow* --exclude=/etc/gshadow* \
 --exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf \
 --exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs / "${WORK}"/rootfs
+
+if [ -n "$EXTRA_PKGS" ]; then
+   echo "Removing extra packages from installed system"
+   apt-get -q=2 remove "$EXTRA_PKGS"
+fi
 
 #Copy boot partition
 echo "Copying the boot dir/partition"
