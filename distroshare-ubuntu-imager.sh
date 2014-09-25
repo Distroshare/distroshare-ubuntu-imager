@@ -216,12 +216,6 @@ rm -f "${WORK}"/rootfs/distroshare_imager.sh
 #Set flavour in /etc/casper.conf
 echo "export FLAVOUR=\"${DISTRIB_ID}\"" >> "${WORK}"/rootfs/etc/casper.conf
 
-if [ $INTERACTIVE_SHELL == "YES" ]; then
-    echo "Dropping to a chrooted shell so you can make custom mods"
-    echo "Type: exit to resume the script"
-    chroot "${WORK}"/rootfs /bin/bash
-fi
-
 echo "Copying over kernel and initrd"
 export kversion=`cd "${WORK}"/rootfs/boot && ls -1 vmlinuz-* | tail -1 | sed 's@vmlinuz-@@'`
 cp -p "${WORK}"/rootfs/boot/vmlinuz-${kversion} "${CASPER}"/vmlinuz
