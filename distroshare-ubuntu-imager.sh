@@ -105,17 +105,20 @@ rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
 echo "Copying the boot dir/partition"
 rsync -a --one-file-system /boot/ "${WORK}"/rootfs/boot
 
+#Unmount the filesystems in case the script failed before
+unmount_filesystems
+
 #Create some links and dirs in /dev
 echo "Creating some links and dirs in /dev"
-mkdir "${WORK}"/rootfs/dev/mapper
-mkdir "${WORK}"/rootfs/dev/pts
-ln -s /proc/kcore "${WORK}"/rootfs/dev/core
-ln -s /proc/self/fd "${WORK}"/rootfs/dev/fd
+mkdir "${WORK}"/rootfs/dev/mapper > /dev/null 2>&1
+mkdir "${WORK}"/rootfs/dev/pts > /dev/null 2>&1
+ln -s /proc/kcore "${WORK}"/rootfs/dev/core > /dev/null 2>&1
+ln -s /proc/self/fd "${WORK}"/rootfs/dev/fd > /dev/null 2>&1
 cd "${WORK}"/rootfs/dev
-ln -s fd/2 stderr
-ln -s fd/0 stdin
-ln -s fd/1 stdout
-ln -s ram ram1
+ln -s fd/2 stderr > /dev/null 2>&1
+ln -s fd/0 stdin > /dev/null 2>&1
+ln -s fd/1 stdout > /dev/null 2>&1
+ln -s ram ram1 > /dev/null 2>&1
 rsync -a /dev/urandom urandom
 cd "${CURRENT_DIR}"
 
@@ -123,9 +126,6 @@ cd "${CURRENT_DIR}"
 echo "Copying resolv.conf"
 mv "${WORK}"/rootfs/etc/resolv.conf "${WORK}"/rootfs/etc/resolv.conf.old
 cp /etc/resolv.conf "${WORK}"/rootfs/etc/resolv.conf
-
-#Unmount the filesystems in case the script failed before
-unmount_filesystems
 
 #Mount dirs into copied distro
 echo "Mounting system file dirs"
@@ -238,12 +238,8 @@ chroot "${WORK}"/rootfs /distroshare_imager.sh
 rm -f "${WORK}"/rootfs/distroshare_imager.sh
 
 echo "Copying over kernel and initrd"
-if [ -n "${KERNEL_VERSION}" ]; then
-    KERNEL_VERSION=$(uname -r)
-fi
-
-cp -p "${WORK}"/rootfs/boot/vmlinuz-${kversion} "${CASPER}"/vmlinuz
-cp -p "${WORK}"/rootfs/boot/initrd.img-${kversion} "${CASPER}"/initrd.img
+cp -p "${WORK}"/rootfs/boot/vmlinuz-"${KERNEL_VERSION}" "${CASPER}"/vmlinuz
+cp -p "${WORK}"/rootfs/boot/initrd.img-"${KERNEL_VERSION}" "${CASPER}"/initrd.img
 cp -p "${WORK}"/rootfs/boot/memtest86+.bin "${CD}"/boot
 
 echo "Creating filesystem.manifest"
