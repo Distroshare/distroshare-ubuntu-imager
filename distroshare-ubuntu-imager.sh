@@ -10,7 +10,7 @@
 
 #GPL2 License
 
-VERSION="1.0.4"
+VERSION="1.0.5"
 
 echo "
 ################################################
@@ -98,7 +98,7 @@ rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
 --exclude=/var/mail/* --exclude=/var/spool/* --exclude=/media/* \
 --exclude=/etc/hosts \
 --exclude=/etc/timezone --exclude=/etc/shadow* --exclude=/etc/gshadow* \
---exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf \
+--exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf --exclude=/etc/mdm/mdm.conf \
 --exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs / "${WORK}"/rootfs
 
 #Copy boot partition
@@ -143,6 +143,9 @@ do
        chroot "${WORK}"/rootfs /bin/bash -c "userdel --force ${i} 2> /dev/null"
 done
 
+#Source lsb-release for DISTRIB_ID
+. /etc/lsb-release
+
 #Run commands in chroot
 echo "Creating script to run in chrooted env"
 cat > "${WORK}"/rootfs/distroshare_imager.sh <<EOF
@@ -155,6 +158,22 @@ if [ -n "$UBIQUITY_KERNEL_PARAMS" ]; then
   echo "Replacing ubiquity default extra kernel params with: $UBIQUITY_KERNEL_PARAMS"
   sed -i "s/defopt_params=\"\"/defopt_params=\"${UBIQUITY_KERNEL_PARAMS}\"/" \
 /usr/share/grub-installer/grub-installer
+fi
+
+#Set flavour in /etc/casper.conf
+echo "export FLAVOUR=\"${DISTRIB_ID}\"" >> /etc/casper.conf
+
+#Checking for LinuxMint and applying specific changes for it
+if [ "${DISTRIB_ID}" == "LinuxMint" ]; then
+    sed -i 's/gdm\/custom.conf/mdm\/mdm.conf/' \
+/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+    echo "[daemon]
+#AutomaticLoginEnable = false
+#AutomaticLogin = none
+#TimedLoginEnable = false
+" > /etc/mdm/mdm.conf
+    #Copy /etc/apt/sources.list to /etc/apt/sources.list.new
+    cp /etc/apt/sources.list /etc/apt/sources.list.new
 fi
 
 #Update initramfs 
@@ -209,6 +228,7 @@ find /var/log -type f -name '*.[0-9]*' -exec rm -f {} \;
 
 #Truncate all logs
 find /var/log -type f -exec truncate -s 0 {} \;
+
 EOF
 
 echo "Running script in chrooted env"
@@ -217,12 +237,11 @@ chown root:root "${WORK}"/rootfs/distroshare_imager.sh
 chroot "${WORK}"/rootfs /distroshare_imager.sh
 rm -f "${WORK}"/rootfs/distroshare_imager.sh
 
-. /etc/lsb-release
-#Set flavour in /etc/casper.conf
-echo "export FLAVOUR=\"${DISTRIB_ID}\"" >> "${WORK}"/rootfs/etc/casper.conf
-
 echo "Copying over kernel and initrd"
-export kversion=`cd "${WORK}"/rootfs/boot && ls -1 vmlinuz-* | tail -1 | sed 's@vmlinuz-@@'`
+if [ -n "${KERNEL_VERSION}" ]; then
+    KERNEL_VERSION=$(uname -r)
+fi
+
 cp -p "${WORK}"/rootfs/boot/vmlinuz-${kversion} "${CASPER}"/vmlinuz
 cp -p "${WORK}"/rootfs/boot/initrd.img-${kversion} "${CASPER}"/initrd.img
 cp -p "${WORK}"/rootfs/boot/memtest86+.bin "${CD}"/boot
