@@ -10,7 +10,7 @@
 
 #GPL2 License
 
-VERSION="1.0.5"
+VERSION="1.0.6"
 
 echo "
 ################################################
@@ -77,11 +77,10 @@ apt-get -q=2 install grub2 xorriso squashfs-tools
 
 echo "Installing Ubiquity"
 apt-get -q=2 install casper lupin-casper
-echo "GTK is: $GTK"
 if [ "$GTK" == "YES" ]; then
    apt-get -q=2 install ubiquity-frontend-gtk
 else
-   apt-get -q=2 install ubiquity-frontend-qt
+   apt-get -q=2 install ubiquity-frontend-kde
 fi
 
 if [ -n "$EXTRA_PKGS" ]; then
@@ -163,10 +162,12 @@ fi
 #Set flavour in /etc/casper.conf
 echo "export FLAVOUR=\"${DISTRIB_ID}\"" >> /etc/casper.conf
 
-#Checking for LinuxMint and applying specific changes for it
-if [ "${DISTRIB_ID}" == "LinuxMint" ]; then
+echo "Setting up display manager for autologin if needed"
+#Testing for MDM and applying specific changes for it
+if [ "${DM}" == "MDM" ]; then
     sed -i 's/gdm\/custom.conf/mdm\/mdm.conf/' \
 /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+    mkdir -p /etc/mdm
     echo "[daemon]
 #AutomaticLoginEnable = false
 #AutomaticLogin = none
@@ -174,6 +175,25 @@ if [ "${DISTRIB_ID}" == "LinuxMint" ]; then
 " > /etc/mdm/mdm.conf
     #Copy /etc/apt/sources.list to /etc/apt/sources.list.new
     cp /etc/apt/sources.list /etc/apt/sources.list.new
+fi
+
+#Testing for GDM and applying specific changes for it
+if [ "${DM}" == "GDM" ]; then
+    mkdir -p /etc/gdm
+    echo "[daemon]
+#AutomaticLoginEnable = false
+#AutomaticLogin = none
+#TimedLoginEnable = false
+" > /etc/gdm/custom.conf
+fi
+
+if [ "${DM}" == "KDM" ]; then
+    mkdir -p /etc/kde4/kdm
+    echo "[X-:0-Core]
+AutoLoginEnable=false
+AutoLoginUser=none
+AutoReLogin=false
+" > /etc/kde4/kdm/kdmrc
 fi
 
 #Update initramfs 
