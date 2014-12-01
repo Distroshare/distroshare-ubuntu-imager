@@ -315,21 +315,6 @@ linux /casper/vmlinuz boot=casper $KERNEL_PARAMS xforcevesa quiet splash --
 initrd /casper/initrd.img
 }
 
-menuentry \"Ubuntu CLI\" {
-linux /casper/vmlinuz boot=casper $KERNEL_PARAMS textonly quiet splash --
-initrd /casper/initrd.img
-}
-
-menuentry \"Ubuntu GUI persistent mode\" {
-linux /casper/vmlinuz boot=casper $KERNEL_PARAMS persistent quiet splash --
-initrd /casper/initrd.img
-}
-
-menuentry \"Ubuntu GUI from RAM\" {
-linux /casper/vmlinuz boot=casper $KERNEL_PARAMS toram quiet splash --
-initrd /casper/initrd.img
-}
-
 menuentry \"Check Disk for Defects\" {
 linux /casper/vmlinuz boot=casper $KERNEL_PARAMS integrity-check quiet splash --
 initrd /casper/initrd.img
