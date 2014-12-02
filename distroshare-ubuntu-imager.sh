@@ -10,7 +10,7 @@
 
 #GPL2 License
 
-VERSION="1.0.6"
+VERSION="1.0.7"
 
 echo "
 ################################################
@@ -266,7 +266,7 @@ echo "Creating filesystem.manifest"
 dpkg-query -W --showformat='${Package} ${Version}\n' > "${CASPER}"/filesystem.manifest
 
 cp "${CASPER}"/filesystem.manifest{,-desktop}
-REMOVE='ubiquity ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4'
+REMOVE='ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4'
 for i in $REMOVE
 do
    sed -i "/${i}/d" "${CASPER}"/filesystem.manifest-desktop
