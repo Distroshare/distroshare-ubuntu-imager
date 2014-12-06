@@ -73,7 +73,7 @@ mkdir -p "${WORK}"/rootfs
 #Install essential tools
 echo "Installing the essential tools"
 apt-get -q=2 update
-apt-get -q=2 install grub2 xorriso squashfs-tools
+apt-get -q=2 install grub2 xorriso squashfs-tools dmraid lvm2
 
 echo "Installing Ubiquity"
 apt-get -q=2 install casper lupin-casper
@@ -98,7 +98,7 @@ rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
 --exclude=/etc/hosts \
 --exclude=/etc/timezone --exclude=/etc/shadow* --exclude=/etc/gshadow* \
 --exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf --exclude=/etc/mdm/mdm.conf \
---exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs / "${WORK}"/rootfs
+--exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs --delete / "${WORK}"/rootfs
 
 #Copy boot partition
 echo "Copying the boot dir/partition"
@@ -196,6 +196,14 @@ AutoReLogin=false
 " > /etc/kde4/kdm/kdmrc
 fi
 
+if [ "${DM}" == "LIGHTDM_UBUNTU_MATE" ]; then
+ sed -i 's/\/etc\/lightdm\/lightdm.conf/\/usr\/share\/lightdm\/lightdm.conf.d\/60-lightdm-gtk-greeter.conf/' \
+/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+
+ sed -i 's/autologin-session=lightdm-autologin/user-session=mate/' \
+/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+fi
+
 #Update initramfs 
 echo "Updating initramfs"
 depmod -a $(uname -r)
@@ -266,7 +274,7 @@ echo "Creating filesystem.manifest"
 dpkg-query -W --showformat='${Package} ${Version}\n' > "${CASPER}"/filesystem.manifest
 
 cp "${CASPER}"/filesystem.manifest{,-desktop}
-REMOVE='ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4'
+REMOVE='ubiquity ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4 apt-clone archdetect-deb dpkg-repack gir1.2-json-1.0 gir1.2-timezonemap-1.0 gir1.2-xkl-1.0 libdebian-installer4 libparted-fs-resize0 libtimezonemap-data libtimezonemap1 python3-icu python3-pam rdate sbsigntool ubiquity-casper ubiquity-ubuntu-artwork localechooser-data'
 for i in $REMOVE
 do
    sed -i "/${i}/d" "${CASPER}"/filesystem.manifest-desktop
