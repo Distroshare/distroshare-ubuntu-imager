@@ -10,7 +10,7 @@
 
 #GPL2 License
 
-VERSION="1.0.7"
+VERSION="1.0.8"
 
 echo "
 ################################################
@@ -87,6 +87,12 @@ if [ -n "$EXTRA_PKGS" ]; then
    echo "Adding extra packages to installed system"
    apt-get -q=2 install "$EXTRA_PKGS"
 fi
+
+echo "Patching Ubiquity to fix a possible installer crash"
+cp /usr/share/ubiquity/plugininstall.py .
+patch < plugininstall.patch
+cp plugininstall.py /usr/share/ubiquity/plugininstall.py
+rm -f plugininstall.py
 
 #Copy the filesystem
 echo "Copying the current system to the new directories"

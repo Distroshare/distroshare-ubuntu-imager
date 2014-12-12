@@ -1,0 +1,11 @@
+--- plugininstall.py	2014-12-12 14:45:35.907519660 -0700
++++ plugininstall.py	2014-12-12 14:46:06.231519117 -0700
+@@ -1690,7 +1690,7 @@
+                 status_gz.write(data)
+             status_gz.close()
+             status.close()
+-        except IOError:
++        except:
+             pass
+         try:
+             if self.db.get('oem-config/enable') == 'true':
