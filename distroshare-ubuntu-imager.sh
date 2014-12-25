@@ -10,7 +10,7 @@
 
 #GPL2 License
 
-VERSION="1.0.8"
+VERSION="1.0.9"
 
 echo "
 ################################################
@@ -32,6 +32,9 @@ CONFIG_FILE="./distroshare-ubuntu-imager.config"
 
 #Current directory
 CURRENT_DIR=`pwd`
+
+#Tmp file for storing language packs not previously installed
+TMP_LANG_PACKS="/tmp/langs_to_uninstall"
 
 #Convience function to unmount filesystems
 unmount_filesystems() {
@@ -82,6 +85,20 @@ if [ "$GTK" == "YES" ]; then
 else
    apt-get -q=2 install ubiquity-frontend-kde
 fi
+
+
+#Install lang packs
+echo "Installing lang packs"
+LANG_PACKS="`apt-cache search language-pack | cut -f 1 -d " " | grep -v "\(kde\|gnome\|touch\)" | tr '\n' ' '`"
+for lang in $LANG_PACKS
+do
+  INSTALLED="`apt-cache policy $lang | grep none`"
+  if [ -n "$INSTALLED"  ]; then
+	echo " $lang" >> $TMP_LANG_PACKS
+  fi
+done
+
+apt-get -q=2 install $LANG_PACKS
 
 if [ -n "$EXTRA_PKGS" ]; then
    echo "Adding extra packages to installed system"
@@ -280,7 +297,7 @@ echo "Creating filesystem.manifest"
 dpkg-query -W --showformat='${Package} ${Version}\n' > "${CASPER}"/filesystem.manifest
 
 cp "${CASPER}"/filesystem.manifest{,-desktop}
-REMOVE='ubiquity ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4 apt-clone archdetect-deb dpkg-repack gir1.2-json-1.0 gir1.2-timezonemap-1.0 gir1.2-xkl-1.0 libdebian-installer4 libparted-fs-resize0 libtimezonemap-data libtimezonemap1 python3-icu python3-pam rdate sbsigntool ubiquity-casper ubiquity-ubuntu-artwork localechooser-data'
+REMOVE='ubiquity ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4 apt-clone archdetect-deb dpkg-repack gir1.2-json-1.0 gir1.2-timezonemap-1.0 gir1.2-xkl-1.0 libdebian-installer4 libparted-fs-resize0 libtimezonemap-data libtimezonemap1 python3-icu python3-pam rdate sbsigntool ubiquity-casper ubiquity-ubuntu-artwork localechooser-data' 
 for i in $REMOVE
 do
    sed -i "/${i}/d" "${CASPER}"/filesystem.manifest-desktop
@@ -288,6 +305,12 @@ done
 
 echo "Uninstalling Ubiquity"
 apt-get -q=2 remove casper lupin-casper ubiquity
+
+echo "Uninstalling language packs not previously installed"
+if [ -f $TMP_LANG_PACKS ]; then
+   apt-get -q=2 remove `cat $TMP_LANG_PACKS | tr '\n' ' '`
+   rm -f $TMP_LANG_PACKS
+fi
 
 if [ -n "$EXTRA_PKGS" ]; then
    echo "Removing extra packages from installed system"
