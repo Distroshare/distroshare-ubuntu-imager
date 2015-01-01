@@ -111,12 +111,11 @@ patch < plugininstall.patch
 cp plugininstall.py /usr/share/ubiquity/plugininstall.py
 rm -f plugininstall.py
 
-echo "Patching Ubiquity crypto-base.sh to disable zram"
-echo " when a user chooses to encrypt the drive/home" 
-cp /lib/partman/lib/crypto-base.sh .
-patch < crypto-base.sh.patch
-cp crypto-base.sh /lib/partman/lib/
-rm -f crypto-base.sh
+echo "Patching Ubiquity to stop it from freaking out if zram is enabled"
+cp /usr/bin/ubiquity .
+patch < ubiquity.patch
+cp ubiquity /usr/bin/
+rm -f ubiquity
 
 #Copy the filesystem
 echo "Copying the current system to the new directories"
