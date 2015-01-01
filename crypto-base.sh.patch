@@ -5,7 +5,7 @@
  			dm_is_safe ${swap%% *} || return 1
  			;;
 +	            /dev/zram*)
-+			apt-get remove zram-config
++			apt-get -q2 remove zram-config
 +			swapoff	$(echo $swap | cut -f 1 -d " ")
 +                        ;;
  		    *)
