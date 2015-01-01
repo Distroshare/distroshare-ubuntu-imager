@@ -1,0 +1,13 @@
+--- crypto-base.orig.sh	2014-12-31 20:18:23.215164157 -0500
++++ crypto-base.sh	2014-12-31 20:23:11.395158996 -0500
+@@ -160,6 +160,10 @@
+ 		    /dev/mapper/*)
+ 			dm_is_safe ${swap%% *} || return 1
+ 			;;
++	            /dev/zram*)
++			apt-get remove zram-config
++			swapoff	$(echo $swap | cut -f 1 -d " ")
++                        ;;
+ 		    *)
+ 			# Presume not safe
+ 			return 1

@@ -111,6 +111,13 @@ patch < plugininstall.patch
 cp plugininstall.py /usr/share/ubiquity/plugininstall.py
 rm -f plugininstall.py
 
+echo "Patching Ubiquity crypto-base.sh to disable zram"
+echo " when a user chooses to encrypt the drive/home" 
+cp /lib/partman/lib/crypto-base.sh .
+patch < crypto-base.sh.patch
+cp crypto-base.sh /lib/partman/lib/
+rm -f crypto-base.sh
+
 #Copy the filesystem
 echo "Copying the current system to the new directories"
 rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
