@@ -10,13 +10,13 @@
 
 #GPL2 License
 
-VERSION="1.0.9"
+VERSION="1.0.10"
 
 echo "
 ################################################
 ######                                    ######
 ######                                    ######
-###### Distroshare Ubuntu Imager $VERSION    ######
+###### Distroshare Ubuntu Imager $VERSION   ######
 ######                                    ######
 ######                                    ######
 ###### Brought to you by distroshare.com  ######
@@ -32,6 +32,9 @@ CONFIG_FILE="./distroshare-ubuntu-imager.config"
 
 #Current directory
 CURRENT_DIR=`pwd`
+
+#Tmp file for storing language packs not previously installed
+TMP_LANG_PACKS="/tmp/langs_to_uninstall"
 
 #Convience function to unmount filesystems
 unmount_filesystems() {
@@ -83,6 +86,18 @@ else
    apt-get -q=2 install ubiquity-frontend-kde
 fi
 
+#Install lang packs
+echo "Installing lang packs"
+LANG_PACKS="`apt-cache search language-pack | cut -f 1 -d " " | grep -v "\(kde\|gnome\|touch\)" | tr '\n' ' '`"
+for lang in $LANG_PACKS
+do
+  INSTALLED="`apt-cache policy $lang | grep none`"
+  if [ -n "$INSTALLED"  ]; then
+	echo " $lang" >> $TMP_LANG_PACKS
+  fi
+done
+
+apt-get -q=2 install $LANG_PACKS
 
 if [ -n "$EXTRA_PKGS" ]; then
    echo "Adding extra packages to installed system"
@@ -157,12 +172,6 @@ done
 
 #Source lsb-release for DISTRIB_ID
 . /etc/lsb-release
-
-
-#Install lang packs
-echo "Installing lang packs"
-LANG_PACKS="`apt-cache search language-pack | cut -f 1 -d " " | grep -v "\(kde\|gnome\|touch\)" | tr '\n' ' '`"
-chroot "${WORK}"/rootfs /bin/bash -c "/usr/bin/apt-get -q=2 install $LANG_PACKS"
 
 #Run commands in chroot
 echo "Creating script to run in chrooted env"
@@ -301,6 +310,12 @@ done
 
 echo "Uninstalling Ubiquity"
 apt-get -q=2 remove casper lupin-casper ubiquity
+
+echo "Uninstalling language packs not previously installed"
+if [ -f $TMP_LANG_PACKS ]; then
+   apt-get -q=2 remove `cat $TMP_LANG_PACKS | tr '\n' ' '`
+   rm -f $TMP_LANG_PACKS
+fi
 
 if [ -n "$EXTRA_PKGS" ]; then
    echo "Removing extra packages from installed system"
