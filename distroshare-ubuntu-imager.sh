@@ -302,7 +302,7 @@ echo "Creating filesystem.manifest"
 dpkg-query -W --showformat='${Package} ${Version}\n' > "${CASPER}"/filesystem.manifest
 
 cp "${CASPER}"/filesystem.manifest{,-desktop}
-REMOVE='ubiquity ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4 apt-clone archdetect-deb dpkg-repack gir1.2-json-1.0 gir1.2-timezonemap-1.0 gir1.2-xkl-1.0 libdebian-installer4 libparted-fs-resize0 libtimezonemap-data libtimezonemap1 python3-icu python3-pam rdate sbsigntool ubiquity-casper ubiquity-ubuntu-artwork localechooser-data cifs-utils' 
+REMOVE='ubiquity ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4 apt-clone archdetect-deb dpkg-repack gir1.2-json-1.0 gir1.2-timezonemap-1.0 gir1.2-xkl-1.0 libdebian-installer4 libparted-fs-resize0 libtimezonemap-data libtimezonemap1 python3-icu python3-pam rdate sbsigntool ubiquity-casper ubiquity-ubuntu-artwork localechooser-data cifs-utils  gir1.2-appindicator3-0.1 gir1.2-javascriptcoregtk-3.0 gir1.2-vte-2.90 gir1.2-webkit-3.0 indicator-application libappindicator3-1 libdbusmenu-gtk3-4 libido3-0.1-0 libindicator3-7 libvte-2.90-9 libvte-2.90-common python3-cairo python3-gi-cairo' 
 for i in $REMOVE
 do
    sed -i "/${i}/d" "${CASPER}"/filesystem.manifest-desktop
