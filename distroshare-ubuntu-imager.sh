@@ -67,7 +67,8 @@ fi
 
 #Make the directories
 echo "Making the necessary directories"
-mkdir -p "${CD}"/{casper,boot/grub}
+mkdir -p "${CD}"/casper
+mkdir -p "${CD}"/boot/grub
 mkdir -p "${WORK}"/rootfs
 
 #Install essential tools
@@ -227,9 +228,13 @@ apt-get clean
 
 #Clean up files
 #rm -f /etc/X11/xorg.conf*
-rm -f /etc/{hosts,hostname,mtab*,fstab}
+rm -f /etc/hosts
+rm -f /etc/hostname
+rm -f /etc/mtab*
+rm -f /etc/fstab
 rm -f /etc/udev/rules.d/70-persistent*
-rm -f /etc/cups/ssl/{server.crt,server.key}
+rm -f /etc/cups/ssl/server.crt
+rm -f /etc/cups/ssl/server.key
 rm -f /etc/NetworkManager/system-connections/*
 rm -f /etc/ssh/*key*
 rm -f /var/lib/dbus/machine-id
@@ -285,7 +290,8 @@ cp -p "${WORK}"/rootfs/boot/memtest86+.bin "${CD}"/boot
 echo "Creating filesystem.manifest"
 dpkg-query -W --showformat='${Package} ${Version}\n' > "${CASPER}"/filesystem.manifest
 
-cp "${CASPER}"/filesystem.manifest{,-desktop}
+cp "${CASPER}"/filesystem.manifest
+cp "${CASPER}"/filesystem.manifest-desktop
 REMOVE='ubiquity ubiquity-frontend-gtk ubiquity-frontend-kde casper user-setup os-prober libdebian-installer4 apt-clone archdetect-deb dpkg-repack gir1.2-json-1.0 gir1.2-timezonemap-1.0 gir1.2-xkl-1.0 libdebian-installer4 libparted-fs-resize0 libtimezonemap-data libtimezonemap1 python3-icu python3-pam rdate sbsigntool ubiquity-casper ubiquity-ubuntu-artwork localechooser-data cifs-utils  gir1.2-appindicator3-0.1 gir1.2-javascriptcoregtk-3.0 gir1.2-vte-2.90 gir1.2-webkit-3.0' 
 for i in $REMOVE
 do
