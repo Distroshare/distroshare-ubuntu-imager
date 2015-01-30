@@ -217,6 +217,15 @@ if [ "${DM}" == "LIGHTDM_UBUNTU_MATE" ]; then
 /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
 fi
 
+if [ "${DM}" == "LIGHTDM_ZORIN" ]; then
+ echo "[SeatDefaults]
+user-session=zorin_desktop
+" > /etc/lightdm/lightdm.conf
+
+ sed -i 's/autologin-session=lightdm-autologin/user-session=zorin_desktop/' \
+/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+fi
+
 #Update initramfs 
 echo "Updating initramfs"
 depmod -a $(uname -r)
