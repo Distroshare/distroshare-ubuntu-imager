@@ -226,6 +226,18 @@ user-session=zorin_desktop
 /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
 fi
 
+if [ "${DM}" == "LIGHTDM_KODIBUNTU" ]; then
+ echo "[SeatDefaults]
+xserver-command=/usr/bin/X -bs -nolisten tcp
+user-session=kodi
+allow-guest=false
+greeter-session=lightdm-gtk-greeter
+" > /etc/lightdm/lightdm.conf
+
+ sed -i 's/autologin-session=lightdm-autologin/user-session=kodi/' \
+/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+fi
+
 #Update initramfs 
 echo "Updating initramfs"
 depmod -a $(uname -r)
