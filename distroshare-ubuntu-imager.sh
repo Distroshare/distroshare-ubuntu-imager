@@ -120,7 +120,7 @@ rsync -a --one-file-system /boot/ "${WORK}"/rootfs/boot
 #Unmount the filesystems in case the script failed before
 unmount_filesystems
 
-#Create some links and dirs in /dev
+#Create devices in /dev
 echo "Creating some links and dirs in /dev"
 mkdir "${WORK}"/rootfs/dev/mapper > /dev/null 2>&1
 mkdir "${WORK}"/rootfs/dev/pts > /dev/null 2>&1
@@ -130,10 +130,169 @@ cd "${WORK}"/rootfs/dev
 ln -s fd/2 stderr > /dev/null 2>&1
 ln -s fd/0 stdin > /dev/null 2>&1
 ln -s fd/1 stdout > /dev/null 2>&1
-ln -s ram ram1 > /dev/null 2>&1
-rsync -a /dev/urandom urandom
-cd "${CURRENT_DIR}"
+ln -s ram1 ram > /dev/null 2>&1
+ln -s shm /run/shm > /dev/null 2>&1
 
+mknod agpgart c 10 175
+chown root:video agpgart
+chmod 660 agpgart
+
+mknod audio c 14 4
+mknod audio1 c 14 20
+mknod audio2 c 14 36
+mknod audio3 c 14 52
+mknod audioctl c 14 7
+chown root:audio audio*
+chmod 660 audio*
+
+mknod console c 5 1
+chown root:tty console
+chmod 600 console
+
+mknod dsp c 14 3
+mknod dsp1 c 14 19
+mknod dsp2 c 14 35
+mknod dsp3 c 14 51
+chown root:audio dsp*
+chmod 660 dsp*
+
+mknod full c 1 7
+chown root:root full
+chmod 666 full
+
+mknod fuse c 10 229
+chown root:messagebus fuse
+chmod 660 fuse
+
+mknod kmem c 1 2
+chown root:kmem kmem
+chmod 640 kmem
+
+mknod loop0 b 7 0
+mknod loop1 b 7 1
+mknod loop2 b 7 2
+mknod loop3 b 7 3
+mknod loop4 b 7 4
+mknod loop5 b 7 5
+mknod loop6 b 7 6
+mknod loop7 b 7 7
+chown root:disk loop*
+chmod 660 loop*
+
+cd mapper
+mknod control c 10 236
+chown root:root control
+chmod 600 control
+cd ..
+
+mknod mem c 1 1
+chown root:kmem mem
+chmod 640 mem
+
+mknod midi0 c 35 0
+mknod midi00 c 14 2
+mknod midi01 c 14 18
+mknod midi02 c 14 34
+mknod midi03 c 14 50
+mknod midi1 c 35 1
+mknod midi2 c 35 2
+mknod midi3 c 35 3
+chown root:audio midi*
+chmod 660 midi*
+
+mknod mixer c 14 0
+mknod mixer1 c 14 16
+mknod mixer2 c 14 32
+mknod mixer3 c 14 48
+chown root:audio mixer*
+chmod 660 mixer*
+
+mknod mpu401data c 31 0
+mknod mpu401stat c 31 1
+chown root:audio mpu401*
+chmod 660 mpu401*
+
+mknod null c 1 3
+chown root:root null
+chmod 666 null
+
+mknod port c 1 4
+chown root:kmem port
+chmod 640 port
+
+mknod ptmx c 5 2
+chown root:tty ptmx
+chmod 666 ptmx
+
+mknod ram0 b 1 0
+mknod ram1 b 1 1
+mknod ram2 b 1 2
+mknod ram3 b 1 3
+mknod ram4 b 1 4
+mknod ram5 b 1 5
+mknod ram6 b 1 6
+mknod ram7 b 1 7
+mknod ram8 b 1 8
+mknod ram9 b 1 9
+mknod ram10 b 1 10
+mknod ram11 b 1 11
+mknod ram12 b 1 12
+mknod ram13 b 1 13
+mknod ram14 b 1 14
+mknod ram15 b 1 15
+mknod ram16 b 1 16
+chown root:disk ram*
+chmod 660 ram*
+
+mknod random c 1 8
+chown root:root random
+chmod 666 random
+
+mknod rmidi0 c 35 64
+mknod rmidi1 c 35 65
+mknod rmidi2 c 35 66
+mknod rmidi3 c 35 67
+chown root:audio rmidi*
+chmod 660 rmidi*
+
+mknod sequencer c 14 1
+chown root:audio sequencer
+chmod 660 sequencer
+
+mknod smpte0 c 35 128
+mknod smpte1 c 35 129
+mknod smpte2 c 35 130
+mknod smpte3 c 35 131
+chown root:audio smpte*
+chmod 660 smpte*
+
+mknod sndstat c 14 6
+chown root:audio sndstat
+chmod 660 sndstat
+
+mknod tty c 5 0
+mknod tty0 c 4 0
+mknod tty1 c 4 1
+mknod tty2 c 4 2
+mknod tty3 c 4 3
+mknod tty4 c 4 4
+mknod tty5 c 4 5
+mknod tty6 c 4 6
+mknod tty7 c 4 7
+mknod tty8 c 4 8
+mknod tty9 c 4 9
+chown root:tty tty*
+chmod 600 tty*
+
+mknod urandom c 1 9
+chown root:root urandom
+chmod 666 urandom
+
+mknod zero c 1 5
+chown root:root zero
+chmod 666 zero
+
+cd "${CURRENT_DIR}"
 #Copy the resolv.conf file - needed for newer Ubuntus
 echo "Copying resolv.conf"
 mv "${WORK}"/rootfs/etc/resolv.conf "${WORK}"/rootfs/etc/resolv.conf.old
