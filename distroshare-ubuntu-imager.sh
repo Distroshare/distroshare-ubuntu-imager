@@ -397,6 +397,16 @@ greeter-session=lightdm-gtk-greeter
 /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
 fi
 
+if [ "${DM}" == "LIGHTDM_DEEPIN" ]; then
+ echo "[SeatDefaults]
+greeter-session=lightdm-deepin-greeter
+user-session=deepin
+" > /etc/lightdm/lightdm.conf
+
+ sed -i 's/autologin-session=lightdm-autologin/user-session=deepin/' \
+/usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+fi
+
 #Update initramfs 
 echo "Updating initramfs"
 depmod -a $(uname -r)
