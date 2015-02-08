@@ -405,6 +405,10 @@ user-session=deepin
 
  sed -i 's/autologin-session=lightdm-autologin/user-session=deepin/' \
 /usr/share/initramfs-tools/scripts/casper-bottom/15autologin
+
+ #Fix for installer icon on desktop 
+ sed -i 's/ubiquity.desktop/ubiquity-gtkui.desktop/' \
+/usr/share/initramfs-tools/scripts/casper-bottom/25adduser
 fi
 
 #Update initramfs 
