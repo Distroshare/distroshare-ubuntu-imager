@@ -10,7 +10,7 @@
 
 #GPL2 License
 
-VERSION="1.0.12"
+VERSION="1.0.13"
 
 echo "
 ################################################
@@ -74,7 +74,35 @@ mkdir -p "${WORK}"/rootfs
 #Install essential tools
 echo "Installing the essential tools"
 apt-get -q=2 update
-apt-get -q=2 install grub2 xorriso squashfs-tools dmraid lvm2 samba-common
+apt-get -q=2 install xorriso squashfs-tools dmraid lvm2 samba-common
+
+GRUB2_INSTALLED=`apt-cache policy grub2 | grep Installed | grep -v none`
+#EFI support requires a different grub version. 
+if [ "$EFI" == "YES" ]
+then
+    ARCH=`/usr/bin/arch`
+    if [ "$ARCH" == "x86_64" ]
+    then 
+	apt-get -q=2 install grub-efi-amd64
+    else
+	apt-get -q=2 install grub-efi-ia32
+    fi
+else
+    apt-get -q=2 install grub2
+fi
+
+
+#Create an extra casper script that prevents an error message in Ubuntu 15.04
+CASPER_SCRIPT_DIR="/usr/share/initramfs-tools/scripts/casper-bottom"
+CASPER_EXTRA_SCRIPT="$CASPER_SCRIPT_DIR/24create_systemd_dir"
+mkdir -p $CASPER_SCRIPT_DIR
+cat > "$CASPER_EXTRA_SCRIPT" <<EOF
+#!/bin/sh
+
+rm -f /root/lib/systemd/system/cdrom.mount
+
+EOF
+chmod a+rx "$CASPER_EXTRA_SCRIPT"
 
 echo "Installing Ubiquity"
 apt-get -q=2 install casper lupin-casper
@@ -491,12 +519,20 @@ do
    sed -i "/${i}/d" "${CASPER}"/filesystem.manifest-desktop
 done
 
+#Remove the extra script created to prevent an error message
+rm -f "$CASPER_EXTRA_SCRIPT"
+
 echo "Uninstalling Ubiquity"
 apt-get -q=2 remove casper lupin-casper ubiquity
 
 if [ -n "$EXTRA_PKGS" ]; then
    echo "Removing extra packages from installed system"
    apt-get -q=2 remove "$EXTRA_PKGS"
+fi
+
+if [ -n "$GRUB2_INSTALLED" -a "$EFI" == "YES" ]
+then
+    sudo apt-get install grub2
 fi
 
 echo "Removing temp files"
