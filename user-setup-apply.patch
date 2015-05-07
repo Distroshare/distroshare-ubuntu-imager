@@ -1,0 +1,16 @@
+--- user-setup-apply	2012-10-15 03:31:33.000000000 -0600
++++ user-setup-apply	2015-05-06 20:37:51.174576055 -0600
+@@ -398,4 +398,13 @@
+ 	db_set passwd/user-password-again ''
+ fi
+ 
++DISTRO=`cat /etc/lsb-release | grep DISTRIB_ID | cut -f 2 -d "=" | sed -e 's/"//g'`
++MACHINE=`$ROOT/usr/sbin/dmidecode | grep Product | cut -f 2 -d ":" | sed -e 's/[^a-zA-Z0-9_]*//g'`
++MACHINE_DIR="/var/lib/distroshare-updater/updates/${MACHINE}_${DISTRO}/"
++if [ -d "${ROOT}/${MACHINE_DIR}/etc/skel" ]
++  then
++  $chroot $ROOT /usr/bin/rsync -a "${MACHINE_DIR}/etc/skel/" /home/$USER/
++  $chroot $ROOT chown -R "$USER:$USER" "/home/$USER" >/dev/null || true
++fi
++
+ exit 0

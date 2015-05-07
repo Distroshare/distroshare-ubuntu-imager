@@ -129,6 +129,18 @@ patch < ubiquity.patch
 cp ubiquity /usr/bin/
 rm -f ubiquity
 
+echo "Patching Ubiquity to rsync skel files from distroshare updater"
+cp /usr/lib/ubiquity/user-setup/user-setup-apply .
+patch < user-setup-apply.patch
+cp user-setup-apply /usr/lib/ubiquity/user-setup/user-setup-apply
+rm -f user-setup-apply
+
+echo "Patching user-setup to rsync skel files from distroshare updater"
+cp /usr/lib/user-setup/user-setup-apply .
+patch < user-setup-apply.patch
+cp user-setup-apply /usr/lib/user-setup/user-setup-apply
+rm -f user-setup-apply
+
 #Copy the filesystem
 echo "Copying the current system to the new directories"
 rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
@@ -139,7 +151,7 @@ rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
 --exclude=/etc/hosts --exclude=/etc/default/locale \
 --exclude=/etc/timezone --exclude=/etc/shadow* --exclude=/etc/gshadow* \
 --exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf --exclude=/etc/mdm/mdm.conf \
---exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs --delete / "${WORK}"/rootfs
+--exclude=/etc/lightdm/lightdm.conf --exclude=/etc/default/du-firstrun --exclude="${WORK}"/rootfs --delete / "${WORK}"/rootfs
 
 #Copy boot partition
 echo "Copying the boot dir/partition"
@@ -523,7 +535,7 @@ done
 rm -f "$CASPER_EXTRA_SCRIPT"
 
 echo "Uninstalling Ubiquity"
-apt-get -q=2 remove casper lupin-casper ubiquity
+apt-get -q=2 remove casper lupin-casper ubiquity user-setup
 
 if [ -n "$EXTRA_PKGS" ]; then
    echo "Removing extra packages from installed system"
