@@ -76,7 +76,7 @@ echo "Installing the essential tools"
 apt-get -q=2 update
 apt-get -q=2 install xorriso squashfs-tools dmraid lvm2 samba-common
 
-GRUB2_INSTALLED=`apt-cache policy grub2 | grep Installed | grep -v none`
+GRUB2_INSTALLED=`apt-cache policy grub-pc | grep Installed | grep -v none`
 #EFI support requires a different grub version. 
 if [ "$EFI" == "YES" ]
 then
@@ -88,7 +88,7 @@ then
 	apt-get -q=2 install grub-efi-ia32
     fi
 else
-    apt-get -q=2 install grub2
+    apt-get -q=2 install grub-pc
 fi
 
 
@@ -544,7 +544,7 @@ fi
 
 if [ -n "$GRUB2_INSTALLED" -a "$EFI" == "YES" ]
 then
-    sudo apt-get install grub2
+    sudo apt-get install grub-pc
 fi
 
 echo "Removing temp files"
