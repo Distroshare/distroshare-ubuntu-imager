@@ -92,18 +92,6 @@ else
 fi
 
 
-#Create an extra casper script that prevents an error message in Ubuntu 15.04
-CASPER_SCRIPT_DIR="/usr/share/initramfs-tools/scripts/casper-bottom"
-CASPER_EXTRA_SCRIPT="$CASPER_SCRIPT_DIR/24create_systemd_dir"
-mkdir -p $CASPER_SCRIPT_DIR
-cat > "$CASPER_EXTRA_SCRIPT" <<EOF
-#!/bin/sh
-
-rm -f /root/lib/systemd/system/cdrom.mount
-
-EOF
-chmod a+rx "$CASPER_EXTRA_SCRIPT"
-
 echo "Installing Ubiquity"
 apt-get -q=2 install casper lupin-casper
 if [ "$GTK" == "YES" ]; then
