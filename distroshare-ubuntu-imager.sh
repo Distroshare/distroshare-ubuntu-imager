@@ -10,7 +10,7 @@
 
 #GPL2 License
 
-VERSION="1.0.13"
+VERSION="1.0.14"
 
 echo "
 ################################################
@@ -116,6 +116,15 @@ cp /usr/bin/ubiquity .
 patch < ubiquity.patch
 cp ubiquity /usr/bin/
 rm -f ubiquity
+
+if [ "$GTK" == "YES" ]
+then
+    echo "Patching Ubiquity Gtk Frontend to make the dialogs smaller"
+    cp /usr/lib/ubiquity/ubiquity/frontend/gtk_ui.py .
+    patch < ubiquity_frontend_gtk_dialog_size.patch
+    cp gtk_ui.py /usr/lib/ubiquity/ubiquity/frontend/gtk_ui.py
+    rm -f gtk_ui.py
+fi
 
 #Copy the filesystem
 echo "Copying the current system to the new directories"
