@@ -76,7 +76,7 @@ echo "Installing the essential tools"
 apt-get -q=2 update
 apt-get -q=2 install xorriso squashfs-tools dmraid lvm2 samba-common
 
-GRUB2_INSTALLED=`apt-cache policy grub2 | grep Installed | grep -v none`
+GRUB2_INSTALLED=`apt-cache policy grub-pc | grep Installed | grep -v none`
 #EFI support requires a different grub version. 
 if [ "$EFI" == "YES" ]
 then
@@ -88,7 +88,7 @@ then
 	apt-get -q=2 install grub-efi-ia32
     fi
 else
-    apt-get -q=2 install grub2
+    apt-get -q=2 install grub-pc
 fi
 
 
@@ -126,6 +126,21 @@ then
     rm -f gtk_ui.py
 fi
 
+if [ "$DISTROSHARE_UPDATER" == "YES" ]
+then
+   echo "Patching Ubiquity to rsync skel files from distroshare updater"
+   cp /usr/lib/ubiquity/user-setup/user-setup-apply .
+   patch < user-setup-apply.patch
+   cp user-setup-apply /usr/lib/ubiquity/user-setup/user-setup-apply
+   rm -f user-setup-apply
+
+   echo "Patching user-setup to rsync skel files from distroshare updater"
+   cp /usr/lib/user-setup/user-setup-apply .
+   patch < user-setup-apply.patch
+   cp user-setup-apply /usr/lib/user-setup/user-setup-apply
+   rm -f user-setup-apply
+fi
+
 #Copy the filesystem
 echo "Copying the current system to the new directories"
 rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
@@ -136,7 +151,8 @@ rsync -a --one-file-system --exclude=/proc/* --exclude=/dev/* \
 --exclude=/etc/hosts --exclude=/etc/default/locale \
 --exclude=/etc/timezone --exclude=/etc/shadow* --exclude=/etc/gshadow* \
 --exclude=/etc/X11/xorg.conf* --exclude=/etc/gdm/custom.conf --exclude=/etc/mdm/mdm.conf \
---exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs --delete / "${WORK}"/rootfs
+--exclude=/etc/lightdm/lightdm.conf --exclude="${WORK}"/rootfs \
+--exclude=/etc/default/du-firstrun --delete / "${WORK}"/rootfs
 
 #Copy boot partition
 echo "Copying the boot dir/partition"
@@ -529,7 +545,7 @@ fi
 
 if [ -n "$GRUB2_INSTALLED" -a "$EFI" == "YES" ]
 then
-    sudo apt-get install grub2
+    sudo apt-get install grub-pc
 fi
 
 echo "Removing temp files"
