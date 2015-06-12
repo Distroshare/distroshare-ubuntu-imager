@@ -1,92 +1,45 @@
 --- gtk_ui.py	2015-04-21 11:06:44.000000000 -0600
-+++ gtk_ui.py	2015-06-05 23:24:04.024650465 -0600
-@@ -75,6 +75,9 @@
- # Define locale path
- LOCALEDIR = "/usr/share/locale"
++++ gtk_ui.py	2015-06-10 12:21:50.716649795 -0600
+@@ -42,6 +42,7 @@
+ import sys
+ import syslog
+ import traceback
++import textwrap
  
-+#Set default dialog size
-+DIALOG_WIDTH = 400
-+DIALOG_HEIGHT = 100
+ import dbus
+ from dbus.mainloop.glib import DBusGMainLoop
+@@ -371,6 +372,10 @@
+             self.live_installer.connect(
+                 'key-press-event', self.a11y_profile_keys)
  
- def set_root_cursor(cursor=None):
-     if cursor is None:
-@@ -468,6 +471,7 @@
-             sys.exit(1)
-         else:
-             self.crash_detail_label.set_text(tbtext)
-+            self.crash_dialog.set_default_size(DIALOG_WIDTH, DIALOG_HEIGHT)
-             self.crash_dialog.run()
-             self.crash_dialog.hide()
-             self.live_installer.hide()
-@@ -717,6 +721,7 @@
-             dialog = Gtk.MessageDialog(
-                 self.live_installer, Gtk.DialogFlags.MODAL,
-                 Gtk.MessageType.ERROR, Gtk.ButtonsType.CLOSE, title)
-+            dialog.set_default_size(DIALOG_WIDTH, DIALOG_HEIGHT)
-             dialog.run()
-             sys.exit(1)
- 
-@@ -823,6 +828,7 @@
++    #Re-format error messages so each line is at most 100 characters long
++    def fix_msg_line_len(self, msg):
++        '\n'.join(textwrap.wrap(msg, 100))
++ 
+     def all_children(self, parent):
+         if isinstance(parent, Gtk.Container):
+             def recurse(x, y):
+@@ -818,6 +823,7 @@
+             else:
+                 txt = self.finished_label.get_label()
+                 txt = txt.replace('${RELEASE}', misc.get_release().name)
++            txt = fix_msg_line_len(txt)
+             self.finished_label.set_label(txt)
+             with misc.raised_privileges():
                  with open('/var/run/reboot-required', "w"):
-                     pass
-             self.finished_dialog.set_keep_above(True)
-+            self.finished_dialog.set_default_size(DIALOG_WIDTH, DIALOG_HEIGHT)
-             self.set_busy_cursor(False)
-             self.finished_dialog.run()
-         elif self.get_reboot():
-@@ -1212,6 +1218,7 @@
-         label = Gtk.Label(label=text)
-         label.set_line_wrap(True)
-         label.set_selectable(False)
-+        dialog.set_default_size(DIALOG_WIDTH, DIALOG_HEIGHT)
-         dialog.get_content_area().add(label)
-         dialog.show_all()
-         response = dialog.run()
-@@ -1422,6 +1429,7 @@
-     def quit_installer(self, *args):
-         """Quit installer cleanly."""
-         # Let the user know we're shutting down.
-+        self.finished_dialog.set_default_size(DIALOG_WIDTH, DIALOG_HEIGHT)
-         self.finished_dialog.get_window().set_cursor(self.watch)
-         self.set_busy_cursor(True)
-         self.quit_button.set_sensitive(False)
-@@ -1438,6 +1446,7 @@
-     # Callbacks
- 
-     def on_quit_clicked(self, unused_widget):
-+        self.warning_dialog.set_default_size(DIALOG_WIDTH, DIALOG_HEIGHT)
-         self.warning_dialog.set_transient_for(
-             self.live_installer.get_toplevel())
-         self.warning_dialog.show_all()
-@@ -1600,6 +1609,7 @@
-             # result.
-             # TODO: We may want to call return_to_partitioning after the crash
-             # dialog instead.
-+            self.crash_dialog.set_default_size(DIALOG_WIDTH, DIALOG_HEIGHT)
-             self.crash_dialog.run()
-             self.crash_dialog.hide()
-             self.live_installer.hide()
-@@ -1727,6 +1737,7 @@
+@@ -1723,6 +1729,7 @@
+         self.set_busy_cursor(False)
+         if not msg:
+             msg = title
++        msg = fix_msg_line_len(msg)
+         dialog = Gtk.MessageDialog(
              self.live_installer, Gtk.DialogFlags.MODAL,
              Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, msg)
-         dialog.set_title(title)
-+        dialog.set_default_size(DIALOG_WIDTH, DIALOG_HEIGHT)
-         dialog.run()
-         self.set_busy_cursor(saved_busy_cursor)
-         dialog.hide()
-@@ -1753,6 +1764,7 @@
-         self.skip_label.set_label(l)
-         self.grub_new_device_entry.get_child().set_text(current_device)
-         self.grub_new_device_entry.get_child().grab_focus()
-+        self.bootloader_fail_dialog.set_default_size(DIALOG_WIDTH, DIALOG_HEIGHT)
-         response = self.bootloader_fail_dialog.run()
-         self.bootloader_fail_dialog.hide()
-         if response == Gtk.ResponseType.OK:
-@@ -1782,6 +1794,7 @@
-             buttons.append((text, len(buttons) + 1))
- 
-         self.ubi_question_dialog.set_title(title)
-+        self.ubi_question_dialog.set_default_size(DIALOG_WIDTH, DIALOG_HEIGHT)
-         self.question_label.set_text(msg)
-         actions = self.ubi_question_dialog.get_action_area()
-         for action in actions.get_children():
+@@ -1771,6 +1778,7 @@
+         self.set_busy_cursor(False)
+         if not msg:
+             msg = title
++        msg = fix_msg_line_len(msg)
+         buttons = []
+         for option in options:
+             if use_templates:
