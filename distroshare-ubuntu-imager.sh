@@ -10,7 +10,7 @@
 
 #GPL2 License
 
-VERSION="1.0.14"
+VERSION="1.0.15"
 
 echo "
 ################################################
@@ -536,7 +536,7 @@ done
 rm -f "$CASPER_EXTRA_SCRIPT"
 
 echo "Uninstalling Ubiquity"
-apt-get -q=2 remove casper lupin-casper ubiquity
+apt-get -q=2 remove casper lupin-casper ubiquity user-setup
 
 if [ -n "$EXTRA_PKGS" ]; then
    echo "Removing extra packages from installed system"

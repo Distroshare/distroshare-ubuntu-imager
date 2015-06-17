@@ -14,7 +14,7 @@
  
 +    #Re-format error messages so each line is at most 100 characters long
 +    def fix_msg_line_len(self, msg):
-+        '\n'.join(textwrap.wrap(msg, 100))
++        return '\n'.join(textwrap.wrap(msg, 100))
 + 
      def all_children(self, parent):
          if isinstance(parent, Gtk.Container):
@@ -23,7 +23,7 @@
              else:
                  txt = self.finished_label.get_label()
                  txt = txt.replace('${RELEASE}', misc.get_release().name)
-+            txt = fix_msg_line_len(txt)
++            txt = self.fix_msg_line_len(txt)
              self.finished_label.set_label(txt)
              with misc.raised_privileges():
                  with open('/var/run/reboot-required', "w"):
@@ -31,7 +31,7 @@
          self.set_busy_cursor(False)
          if not msg:
              msg = title
-+        msg = fix_msg_line_len(msg)
++        msg = self.fix_msg_line_len(msg)
          dialog = Gtk.MessageDialog(
              self.live_installer, Gtk.DialogFlags.MODAL,
              Gtk.MessageType.ERROR, Gtk.ButtonsType.OK, msg)
@@ -39,7 +39,7 @@
          self.set_busy_cursor(False)
          if not msg:
              msg = title
-+        msg = fix_msg_line_len(msg)
++        msg = self.fix_msg_line_len(msg)
          buttons = []
          for option in options:
              if use_templates:
