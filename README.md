@@ -19,7 +19,7 @@ based on this tutorial: https://help.ubuntu.com/community/MakeALiveCD/DVD/Bootab
 To run the script, run it from the directory where it is located.  For example:
 
 
-cd ~/distroshare-ubuntu-imager-1.0
+cd ~/distroshare-ubuntu-imager-1.0 &&
 ./distroshare-ubuntu-imager.sh
 
 To boot the ISO from a USB stick, you can use the dd command like this:
