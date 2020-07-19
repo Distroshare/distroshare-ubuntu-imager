@@ -599,7 +599,7 @@ chainloader +1
 " > "${CD}"/boot/grub/grub.cfg
 
 echo "Creating the iso"
-grub-mkrescue -o "${WORK}"/live-cd.iso "${CD}"
+grub-mkrescue -iso-level 3 -o "${WORK}"/live-cd.iso "${CD}"
 
 echo "We are done."
 echo "Is your distro interesting or customized for a specific machine?"
